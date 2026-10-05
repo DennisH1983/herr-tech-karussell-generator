@@ -39,6 +39,37 @@ Erlaubte Slide-Typen + Felder (JSON-Schema):
    { "type": "cta", "tagLabel": "JETZT STARTEN", "headline": "...", "tagline": "...", "ctaText": "Zum Tool →" }
 `
 
+// ─── Text clean-up ───────────────────────────────────────────────────────────
+
+/** Collapse whitespace before punctuation: "Training . Du" → "Training. Du". */
+function tidyText(text: string): string {
+  return text.replace(/[ \u00A0]+([.,!?;:])/g, '$1')
+}
+
+/**
+ * Restore digits the model sometimes drops from the brand name,
+ * e.g. "Ü Muskel Code" → "Ü40 Muskel Code" when the brand is "Der Ü40 Muskel Code".
+ */
+function restoreBrandName(text: string, brandName: string): string {
+  if (!brandName || !/\d/.test(brandName)) return text
+  const core = brandName.replace(/^(der|die|das)\s+/i, '').trim()
+  const withoutDigits = core.replace(/\d+/g, '').replace(/\s+/g, ' ').trim()
+  if (!withoutDigits || withoutDigits === core) return text
+  return text.split(withoutDigits).join(core)
+}
+
+/** Apply text clean-up to every string inside the slides JSON. */
+function cleanStrings<T>(value: T, brandName: string): T {
+  if (typeof value === 'string') return tidyText(restoreBrandName(value, brandName)) as T
+  if (Array.isArray(value)) return value.map((v) => cleanStrings(v, brandName)) as T
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([k, v]) => [k, cleanStrings(v, brandName)]),
+    ) as T
+  }
+  return value
+}
+
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json(
@@ -47,7 +78,11 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  const { blogPost, slideCount = 7, handle = '', refinePrompt, currentSlides, currentPalette } = await req.json()
+  const { blogPost, slideCount = 7, handle = '', brandName = '', refinePrompt, currentSlides, currentPalette } = await req.json()
+
+  const brandRule = brandName
+    ? `- Der Markenname lautet exakt "${brandName}". Schreibe ihn immer genau so, inklusive aller Zahlen und Zeichen.`
+    : ''
 
   const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
@@ -75,6 +110,7 @@ Regeln:
 - Ändere nur was die Anweisung verlangt
 - Farb-Anweisungen (z.B. "Primärfarbe Grün", "Blauer") → aktualisiere primaryColor als Hex
 - Text-Anweisungen → aktualisiere die Slides
+${brandRule}
 
 Gib NUR valides JSON zurück:
 {
@@ -85,7 +121,7 @@ Gib NUR valides JSON zurück:
       })
       try {
         const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-        return NextResponse.json(JSON.parse(cleaned))
+        return NextResponse.json(cleanStrings(JSON.parse(cleaned), brandName))
       } catch {
         return NextResponse.json({ error: 'Parse error', raw: text }, { status: 500 })
       }
@@ -113,7 +149,8 @@ NARRATIVE-ARC-REGELN (WICHTIG):
 - Pills/Tags max. 3 Wörter
 - Feature/Step-Descriptions max. 12 Wörter
 - Jeder tagLabel uppercase, max. 3 Wörter (z.B. "DAS PROBLEM", "SO GEHT'S", "FEATURES")
-- ctaText kurz und aktionsorientiert (z.B. "Jetzt testen →", "Folgen für mehr")
+- ctaText kurz und aktionsorientiert. Instagram-Bilder sind nicht klickbar: verweise auf den Link in der Bio, aufs Speichern oder auf einen Kommentar (z.B. "Link in der Bio →", "Speichern & später lesen")
+${brandRule}
 ${handle ? `- Wenn sinnvoll, erwähne @${handle} dezent` : ''}
 
 Gib NUR valides JSON zurück, kein Text davor oder danach:
@@ -125,7 +162,7 @@ Gib NUR valides JSON zurück, kein Text davor oder danach:
 
     try {
       const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
-      const data = JSON.parse(cleaned)
+      const data = cleanStrings(JSON.parse(cleaned), brandName)
       return NextResponse.json(data)
     } catch {
       return NextResponse.json({ error: 'Parse error', raw: text }, { status: 500 })

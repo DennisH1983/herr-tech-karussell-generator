@@ -1,42 +1,47 @@
 /**
- * FeatureRow — a single icon + label + description row used on features slides.
+ * FeatureRow — a single marker + label + description row used on features slides.
+ *
+ * The `icon` field stays in the schema for compatibility, but is no longer
+ * rendered: colorful emojis clashed with the calm brand typography. Each row
+ * gets a short accent bar in the brand color instead.
  */
 
 import type { CSSProperties } from 'react'
 
 export function FeatureRow({
-  icon,
   label,
   description,
   isDark = false,
   headlineFont,
   bodyFont,
+  brandPrimary,
   style,
 }: {
-  icon: string
+  icon?: string
   label: string
   description: string
   isDark?: boolean
   headlineFont: string
   bodyFont: string
+  brandPrimary?: string
   style?: CSSProperties
 }) {
   const labelColor = isDark ? 'rgba(255,255,255,0.95)' : 'rgba(0,0,0,0.9)'
   const descColor = isDark ? 'rgba(255,255,255,0.6)' : 'rgba(0,0,0,0.55)'
 
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, ...style }}>
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, ...style }}>
       <div
+        aria-hidden
         style={{
           flexShrink: 0,
-          fontSize: 22,
-          lineHeight: 1,
-          width: 32,
-          textAlign: 'center',
+          width: 4,
+          height: 18,
+          marginTop: 1,
+          borderRadius: 2,
+          background: brandPrimary ?? labelColor,
         }}
-      >
-        {icon}
-      </div>
+      />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{

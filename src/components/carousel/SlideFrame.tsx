@@ -281,10 +281,20 @@ function renderSlideContent(args: {
     fontWeight: headlineWeight,
     fontSize: 34,
     lineHeight: 1.15,
-    letterSpacing: '-0.01em',
+    // No negative letter-spacing: with any letter-spacing html2canvas draws
+    // glyph by glyph and leaves gaps before punctuation ("Training . Du").
+    letterSpacing: 'normal',
     color: headlineColor,
     wordBreak: 'break-word',
     marginBottom: 14,
+  }
+  // Sparse slides (headline + a few pills or one box) sit vertically centered
+  // instead of hugging the top and leaving the lower half empty.
+  const centeredBlock: CSSProperties = {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
   }
   const hookStyle: CSSProperties = {
     fontFamily: bodyFont,
@@ -371,33 +381,35 @@ function renderSlideContent(args: {
       const s = slide
       return (
         <>
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
-              {onEdit ? (
-                <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark />
-              ) : s.tagLabel}
-            </TagLabel>
-          </div>
-          {onEdit ? (
-            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
-          ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {s.strikethroughPills.map((p, i) => (
-              <Pill key={i} strikethrough isDark brandPrimary={palette.brandPrimary}>
+          <div style={centeredBlock}>
+            <div style={{ marginBottom: 14 }}>
+              <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
                 {onEdit ? (
-                  <EditableText
-                    value={p}
-                    onChange={(v) => {
-                      const pills = [...s.strikethroughPills]
-                      pills[i] = v
-                      onEdit({ ...s, strikethroughPills: pills })
-                    }}
-                    style={{ display: 'inline-block', fontSize: 'inherit', color: 'inherit' }}
-                    isDark
-                  />
-                ) : p}
-              </Pill>
-            ))}
+                  <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark />
+                ) : s.tagLabel}
+              </TagLabel>
+            </div>
+            {onEdit ? (
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
+            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {s.strikethroughPills.map((p, i) => (
+                <Pill key={i} strikethrough isDark brandPrimary={palette.brandPrimary}>
+                  {onEdit ? (
+                    <EditableText
+                      value={p}
+                      onChange={(v) => {
+                        const pills = [...s.strikethroughPills]
+                        pills[i] = v
+                        onEdit({ ...s, strikethroughPills: pills })
+                      }}
+                      style={{ display: 'inline-block', fontSize: 'inherit', color: 'inherit' }}
+                      isDark
+                    />
+                  ) : p}
+                </Pill>
+              ))}
+            </div>
           </div>
         </>
       )
@@ -407,25 +419,27 @@ function renderSlideContent(args: {
       const s = slide
       return (
         <>
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
-              {onEdit ? (
-                <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark={onGradient} />
-              ) : s.tagLabel}
-            </TagLabel>
+          <div style={centeredBlock}>
+            <div style={{ marginBottom: 14 }}>
+              <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
+                {onEdit ? (
+                  <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark={onGradient} />
+                ) : s.tagLabel}
+              </TagLabel>
+            </div>
+            {onEdit ? (
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, marginBottom: 20 }} multiline isDark={onGradient} />
+            ) : <h1 style={{ ...h1Style, marginBottom: 20 }}>{s.headline}</h1>}
+            {s.promptBox && (
+              <PromptBox
+                label={s.promptBox.label}
+                quote={s.promptBox.quote}
+                onGradient={onGradient}
+                isDark={isDark}
+                fontFamily={bodyFont}
+              />
+            )}
           </div>
-          {onEdit ? (
-            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, marginBottom: 20 }} multiline isDark={onGradient} />
-          ) : <h1 style={{ ...h1Style, marginBottom: 20 }}>{s.headline}</h1>}
-          {s.promptBox && (
-            <PromptBox
-              label={s.promptBox.label}
-              quote={s.promptBox.quote}
-              onGradient={onGradient}
-              isDark={isDark}
-              fontFamily={bodyFont}
-            />
-          )}
         </>
       )
     }
@@ -453,6 +467,7 @@ function renderSlideContent(args: {
                 description={f.description}
                 headlineFont={headlineFont}
                 bodyFont={bodyFont}
+                brandPrimary={palette.brandPrimary}
               />
             ))}
           </div>
@@ -464,33 +479,35 @@ function renderSlideContent(args: {
       const s = slide
       return (
         <>
-          <div style={{ marginTop: 12, marginBottom: 14 }}>
-            <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
-              {onEdit ? (
-                <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark />
-              ) : s.tagLabel}
-            </TagLabel>
-          </div>
-          {onEdit ? (
-            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
-          ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {s.tags.map((t, i) => (
-              <Pill key={i} isDark>
+          <div style={centeredBlock}>
+            <div style={{ marginBottom: 14 }}>
+              <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
                 {onEdit ? (
-                  <EditableText
-                    value={t}
-                    onChange={(v) => {
-                      const tags = [...s.tags]
-                      tags[i] = v
-                      onEdit({ ...s, tags })
-                    }}
-                    style={{ display: 'inline-block', fontSize: 'inherit', color: 'inherit' }}
-                    isDark
-                  />
-                ) : t}
-              </Pill>
-            ))}
+                  <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} isDark />
+                ) : s.tagLabel}
+              </TagLabel>
+            </div>
+            {onEdit ? (
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
+            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {s.tags.map((t, i) => (
+                <Pill key={i} isDark>
+                  {onEdit ? (
+                    <EditableText
+                      value={t}
+                      onChange={(v) => {
+                        const tags = [...s.tags]
+                        tags[i] = v
+                        onEdit({ ...s, tags })
+                      }}
+                      style={{ display: 'inline-block', fontSize: 'inherit', color: 'inherit' }}
+                      isDark
+                    />
+                  ) : t}
+                </Pill>
+              ))}
+            </div>
           </div>
         </>
       )

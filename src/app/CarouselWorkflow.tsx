@@ -505,6 +505,7 @@ export default function CarouselWorkflow() {
           blogPost,
           slideCount: ci.slideCount,
           handle: ci.handle,
+          brandName: ci.brandName,
         }),
       })
       const data = await res.json()
@@ -544,6 +545,7 @@ export default function CarouselWorkflow() {
           refinePrompt: prompt,
           currentSlides: slides,
           currentPalette: { brandPrimary: ci.primaryColor },
+          brandName: ci.brandName,
         }),
       })
       const data = await res.json()

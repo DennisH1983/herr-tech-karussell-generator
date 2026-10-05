@@ -12,7 +12,7 @@
  *   LIGHT_BG       — tinted off-white (hue-aware)
  *   LIGHT_BORDER   — LIGHT_BG -5% lightness
  *   DARK_BG        — near-black with subtle hue tint
- *   GRADIENT       — linear-gradient(165deg, BRAND_DARK, BRAND_PRIMARY, BRAND_LIGHT)
+ *   GRADIENT       — linear-gradient(165deg, DARK_BG, deep brand tone, slightly lighter deep tone)
  */
 
 export interface BrandPalette {
@@ -108,8 +108,12 @@ export function deriveBrandPalette(primaryHex: string): BrandPalette {
   const darkBgSat = s < 10 ? 8 : Math.min(18, s * 0.25)
   const darkBg = hslToHex(h, darkBgSat, 8)
 
-  // Gradient: 165deg diagonal from dark → primary → light
-  const gradient = `linear-gradient(165deg, ${brandDark} 0%, ${brandPrimary} 50%, ${brandLight} 100%)`
+  // Gradient: 165deg diagonal from near-black → deep brand tone.
+  // Stays dark regardless of how bright the primary is, so gradient slides
+  // read premium instead of loud. The bright primary is kept for accents only.
+  const gradientMid = hslToHex(h, s, clamp(l * 0.25, 6, 14))
+  const gradientEnd = hslToHex(h, s, clamp(l * 0.5, 14, 26))
+  const gradient = `linear-gradient(165deg, ${darkBg} 0%, ${gradientMid} 55%, ${gradientEnd} 100%)`
 
   return {
     brandPrimary,
