@@ -106,6 +106,8 @@ function StylePresetTile({
 
 type CIMode = 'preset' | 'url' | 'manual' | 'text'
 
+const AUTOSAVE_KEY = 'karussell-autosave-v1'
+
 interface CISettings {
   primaryColor: string
   fontPairingId: string
@@ -183,7 +185,13 @@ function CISection({
   }, [ciText, setCi])
 
   const handleLogoUpload = useCallback(async (file: File) => {
-    const logoUrl = URL.createObjectURL(file)
+    // Data-URL statt Blob-URL, damit das Logo die Auto-Speicherung übersteht
+    const logoUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
     const color = await extractPrimaryColorFromImage(file)
     setCi((p) => ({ ...p, logoUrl, primaryColor: color }))
   }, [setCi])
@@ -441,6 +449,41 @@ export default function CarouselWorkflow() {
   const [activeSlide, setActiveSlide] = useState(0)
   const slidesContainerRef = useRef<HTMLDivElement>(null)
   const refineInputRef = useRef<HTMLTextAreaElement>(null)
+
+  // ─── Auto-Speicherung im Browser (überlebt Neuladen) ───────────────────────
+  const [restored, setRestored] = useState(false)
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(AUTOSAVE_KEY)
+      if (raw) {
+        const saved = JSON.parse(raw)
+        if (typeof saved.blogPost === 'string') setBlogPost(saved.blogPost)
+        if (saved.ci) setCi((p) => ({ ...p, ...saved.ci }))
+        if (Array.isArray(saved.slides) && saved.slides.length) setSlides(saved.slides)
+        if (Array.isArray(saved.refineHistory)) setRefineHistory(saved.refineHistory)
+        if (saved.step === 'preview' || saved.step === 'input') setStep(saved.step)
+      }
+    } catch {
+      // Speicher nicht verfügbar oder kaputt → mit Standardwerten weiter
+    }
+    setRestored(true)
+  }, [])
+
+  useEffect(() => {
+    if (!restored) return
+    const data = { step, blogPost, ci, slides, refineHistory }
+    try {
+      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify(data))
+    } catch {
+      // Zu groß (z.B. riesiges Logo) → ohne Logo speichern
+      try {
+        localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ ...data, ci: { ...ci, logoUrl: null } }))
+      } catch {
+        // Speicher nicht verfügbar
+      }
+    }
+  }, [restored, step, blogPost, ci, slides, refineHistory])
 
   const pairing: FontPairing = useMemo(
     () => FONT_PAIRINGS.find((p) => p.id === ci.fontPairingId) ?? DEFAULT_FONT_PAIRING,
