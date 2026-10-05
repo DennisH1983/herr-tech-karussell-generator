@@ -35,7 +35,7 @@ interface StylePreset {
 }
 
 const STYLE_PRESETS: StylePreset[] = [
-  { id: 'herrtech',  name: 'Herr Tech Lila', emoji: '💜', primaryColor: '#B598E2', fontPairingId: 'modern' },
+  { id: 'ue40',      name: 'Ü40 Muskel Code', emoji: '🔥', primaryColor: '#E10600', fontPairingId: 'bold' },
   { id: 'editorial', name: 'Editorial',       emoji: '📖', primaryColor: '#8B5E3C', fontPairingId: 'editorial' },
   { id: 'tech',      name: 'Tech Blue',       emoji: '⚡', primaryColor: '#2563EB', fontPairingId: 'technical' },
   { id: 'warm',      name: 'Warm Coral',      emoji: '☕', primaryColor: '#E07A5F', fontPairingId: 'warm' },
@@ -359,7 +359,7 @@ function CISection({
             <textarea
               value={ciText}
               onChange={(e) => setCiText(e.target.value)}
-              placeholder={'Farben:\nPrimär: #B598E2 (Lila)\n\nStil:\nModern, clean, tech-forward\n\nFonts:\nSans-Serif, geometric'}
+              placeholder={'Farben:\nPrimär: #E10600 (Rot)\nHintergrund: Schwarz, Text: Weiß\n\nStil:\nKräftig, direkt, maskulin\n\nFonts:\nBold Sans-Serif'}
               rows={7}
               className="w-full border border-border rounded-xl px-4 py-3 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none font-mono"
             />
@@ -424,9 +424,9 @@ export default function CarouselWorkflow() {
   const [step, setStep] = useState<'input' | 'preview'>('input')
   const [blogPost, setBlogPost] = useState('')
   const [ci, setCi] = useState<CISettings>({
-    primaryColor: '#B598E2',
-    fontPairingId: 'modern',
-    brandName: '',
+    primaryColor: '#E10600',
+    fontPairingId: 'bold',
+    brandName: 'Der Ü40 Muskel Code',
     handle: '',
     slideCount: 7,
     logoUrl: null,
@@ -590,7 +590,7 @@ export default function CarouselWorkflow() {
               type="text"
               value={ci.brandName}
               onChange={(e) => setCi((p) => ({ ...p, brandName: e.target.value }))}
-              placeholder="Herr Tech"
+              placeholder="Der Ü40 Muskel Code"
               className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>

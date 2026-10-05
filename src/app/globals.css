@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  /* Herr Tech Dark Theme */
-  --background: #0F0F13;
-  --foreground: #E8E4E0;
-  --surface: #1A1A23;
-  --surface-secondary: #14141C;
-  --border: #2A2A35;
-  --muted: #8A8A9A;
-  --primary: #B598E2;
+  /* Ü40 Muskel Code — Schwarz / Weiß / Rot */
+  --background: #0A0A0A;
+  --foreground: #FFFFFF;
+  --surface: #161616;
+  --surface-secondary: #111111;
+  --border: #2A2A2A;
+  --muted: #9A9A9A;
+  --primary: #E10600;
 }
 
 * {

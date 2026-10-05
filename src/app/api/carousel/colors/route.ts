@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
   const { text } = await generateText({
-    model: anthropic('claude-sonnet-4-5-20250929'),
+    model: anthropic('claude-sonnet-5-5'),
     messages: [{
       role: 'user',
       content: `Du bist ein Branding-Experte. Analysiere diese CI-Beschreibung und wähle eine Primärfarbe + passendes Font-Pairing für ein Instagram-Karussell-Tool.
@@ -32,7 +32,7 @@ ${description}
 """
 
 REGELN:
-- primaryColor: Die markanteste/auffälligste Markenfarbe als Hex (z.B. #B598E2). Ignoriere Hintergrund-Weißtöne, Grau-Töne — wir brauchen die ECHTE Marken-Akzentfarbe.
+- primaryColor: Die markanteste/auffälligste Markenfarbe als Hex (z.B. #E10600). Ignoriere Hintergrund-Weißtöne, Grau-Töne — wir brauchen die ECHTE Marken-Akzentfarbe.
 - fontPairingId: Wähle das passendste Pairing aus:
     "editorial"   — Playfair Display + DM Sans (Serifen-Magazin-Look)
     "modern"      — Plus Jakarta Sans (clean, geometrisch, tech)
@@ -54,12 +54,12 @@ Gib NUR valides JSON zurück:
       ? parsed.fontPairingId
       : 'modern'
     return NextResponse.json({
-      primaryColor: parsed.primaryColor ?? '#B598E2',
+      primaryColor: parsed.primaryColor ?? '#E10600',
       fontPairingId: pairingId,
     })
   } catch {
     return NextResponse.json({
-      primaryColor: '#B598E2',
+      primaryColor: '#E10600',
       fontPairingId: 'modern',
     })
   }

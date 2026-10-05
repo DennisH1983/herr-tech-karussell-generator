@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
   try {
     if (refinePrompt && currentSlides) {
       const { text } = await generateText({
-        model: anthropic('claude-sonnet-4-5-20250929'),
+        model: anthropic('claude-sonnet-5-5'),
         messages: [{
           role: 'user',
           content: `Du bist ein Social-Media-Experte. Hier sind die aktuellen Karussell-Slides und Brand-Farbe:
@@ -63,7 +63,7 @@ AKTUELLE SLIDES:
 ${JSON.stringify(currentSlides, null, 2)}
 
 AKTUELLE PRIMÄRFARBE:
-${currentPalette?.brandPrimary || '#B598E2'}
+${currentPalette?.brandPrimary || '#E10600'}
 
 Aufgabe: Überarbeite entsprechend dieser Anweisung:
 "${refinePrompt}"
@@ -94,7 +94,7 @@ Gib NUR valides JSON zurück:
     const count = Math.max(5, Math.min(10, Number(slideCount) || 7))
 
     const { text } = await generateText({
-      model: anthropic('claude-sonnet-4-5-20250929'),
+      model: anthropic('claude-sonnet-5-5'),
       messages: [{
         role: 'user',
         content: `Du bist ein Social-Media-Experte für Instagram-Karussells. Baue aus diesem Text einen Karussell-Narrative-Arc mit genau ${count} Slides.
