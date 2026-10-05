@@ -18,14 +18,12 @@ export function Pill({
   brandPrimary?: string
   style?: CSSProperties
 }) {
-  // Fixed height + matching line-height instead of inline-flex centering:
-  // html2canvas mis-places text inside flex pills, which pushed the label
-  // towards the bottom edge in exported PNGs.
+  // line-height 1 with equal vertical padding keeps the label centered in the
+  // browser without relying on flex alignment.
   const baseStyle: CSSProperties = {
     display: 'inline-block',
-    height: 30,
-    lineHeight: '28px',
-    padding: '0 14px',
+    lineHeight: 1,
+    padding: '8px 14px',
     borderRadius: 999,
     fontSize: 13,
     fontWeight: 500,
@@ -37,13 +35,17 @@ export function Pill({
     ...style,
   }
 
-  if (strikethrough) {
-    // Drawn as an element, not text-decoration: html2canvas renders
-    // line-through at the wrong height (it showed up above the text).
-    return (
-      <span style={baseStyle}>
-        <span style={{ position: 'relative', display: 'inline-block', opacity: 0.7 }}>
+  // The label carries data-export-nudge: html2canvas draws small pill text
+  // too low, so export-png lifts it in the cloned DOM (preview is unaffected).
+  return (
+    <span style={baseStyle}>
+      <span style={{ position: 'relative', display: 'inline-block', lineHeight: 1 }}>
+        <span data-export-nudge style={{ opacity: strikethrough ? 0.7 : 1 }}>
           {children}
+        </span>
+        {strikethrough && (
+          // Drawn as an element, not text-decoration: html2canvas renders
+          // line-through at the wrong height.
           <span
             aria-hidden
             style={{
@@ -54,12 +56,11 @@ export function Pill({
               height: 2,
               marginTop: -1,
               background: brandPrimary ?? '#ef4444',
+              opacity: 0.85,
             }}
           />
-        </span>
+        )}
       </span>
-    )
-  }
-
-  return <span style={baseStyle}>{children}</span>
+    </span>
+  )
 }

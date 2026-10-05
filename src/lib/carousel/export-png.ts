@@ -13,6 +13,8 @@ import { SLIDE_WIDTH } from '@/components/carousel/SlideFrame'
 
 const TARGET_WIDTH = 1080 // Instagram recommended width
 const SCALE = TARGET_WIDTH / SLIDE_WIDTH
+/** Upward correction for pill labels in exports, measured on Plus Jakarta Sans 13px. */
+const EXPORT_NUDGE_EM = 0.45
 
 export interface ExportPngOptions {
   /** Container holding all slide DOM elements (each tagged with data-slide) */
@@ -47,6 +49,14 @@ export async function exportCarouselAsPngZip({
       useCORS: true,
       backgroundColor: null,
       logging: false,
+      // html2canvas draws small inline-block text (pill labels) noticeably
+      // below where the browser puts it. Lift those labels in the clone only.
+      onclone: (doc) => {
+        doc.querySelectorAll<HTMLElement>('[data-export-nudge]').forEach((el) => {
+          el.style.position = 'relative'
+          el.style.top = `-${EXPORT_NUDGE_EM}em`
+        })
+      },
     })
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob(

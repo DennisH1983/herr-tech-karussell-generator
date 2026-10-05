@@ -10,7 +10,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import type { BrandPalette } from '@/lib/carousel/palette'
 import type { Slide } from '@/lib/carousel/slides'
 import { backgroundForSlide } from '@/lib/carousel/slides'
@@ -30,6 +30,28 @@ export const SLIDE_WIDTH = 420
 export const SLIDE_HEIGHT = 525
 export const SLIDE_PADDING = 36
 
+// ─── Headline punctuation ────────────────────────────────────────────────────
+
+/**
+ * Some display fonts ship punctuation with a wide left side bearing. In heavy
+ * weights that reads like a stray space ("Training . Du"). For those fonts we
+ * pull . , ! ; : towards the preceding letter. Value is in em, measured from
+ * the glyph metrics at weight 800.
+ */
+const PUNCTUATION_PULL_EM: Record<string, number> = {
+  'Plus Jakarta Sans': 0.09,
+}
+
+function tightenPunctuation(text: string, font: string): ReactNode {
+  const pull = PUNCTUATION_PULL_EM[font.replace(/["']/g, '')]
+  if (!pull) return text
+  return text.split(/([.,!;:])/).map((part, i) =>
+    i % 2 === 1
+      ? <span key={i} style={{ marginLeft: `-${pull}em` }}>{part}</span>
+      : part,
+  )
+}
+
 // ─── Editable text helper ────────────────────────────────────────────────────
 
 function EditableText({
@@ -39,6 +61,7 @@ function EditableText({
   multiline = false,
   placeholder,
   isDark = false,
+  render,
 }: {
   value: string
   onChange?: (v: string) => void
@@ -46,7 +69,10 @@ function EditableText({
   multiline?: boolean
   placeholder?: string
   isDark?: boolean
+  /** Custom display rendering (not used while the field is being edited). */
+  render?: (v: string) => ReactNode
 }) {
+  const display = render ? render(value) : value
   const [editing, setEditing] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -60,7 +86,7 @@ function EditableText({
 
   // If onChange isn't provided, we're in render-only mode (export path).
   if (!onChange) {
-    return <span style={{ ...style, display: 'block', whiteSpace: 'pre-wrap' }}>{value}</span>
+    return <span style={{ ...style, display: 'block', whiteSpace: 'pre-wrap' }}>{display}</span>
   }
 
   if (editing) {
@@ -122,7 +148,7 @@ function EditableText({
       }}
       className={isDark ? 'hover:bg-white/10' : 'hover:bg-black/5'}
     >
-      {value || <span style={{ opacity: 0.4 }}>{placeholder}</span>}
+      {value ? display : <span style={{ opacity: 0.4 }}>{placeholder}</span>}
     </span>
   )
 }
@@ -288,6 +314,8 @@ function renderSlideContent(args: {
     wordBreak: 'break-word',
     marginBottom: 14,
   }
+  const headline = (text: string) => tightenPunctuation(text, headlineFont)
+
   // Sparse slides (headline + a few pills or one box) sit vertically centered
   // instead of hugging the top and leaving the lower half empty.
   const centeredBlock: CSSProperties = {
@@ -346,9 +374,9 @@ function renderSlideContent(args: {
                 onChange={(v) => onEdit({ ...s, headline: v })}
                 style={h1Style}
                 multiline
-                isDark={isDark || onGradient}
+                isDark={isDark || onGradient} render={headline}
               />
-            ) : <h1 style={h1Style}>{s.headline}</h1>}
+            ) : <h1 style={h1Style}>{headline(s.headline)}</h1>}
             {onEdit ? (
               <EditableText
                 value={s.hook}
@@ -390,8 +418,8 @@ function renderSlideContent(args: {
               </TagLabel>
             </div>
             {onEdit ? (
-              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
-            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark render={headline} />
+            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{headline(s.headline)}</h1>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {s.strikethroughPills.map((p, i) => (
                 <Pill key={i} strikethrough isDark brandPrimary={palette.brandPrimary}>
@@ -428,8 +456,8 @@ function renderSlideContent(args: {
               </TagLabel>
             </div>
             {onEdit ? (
-              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, marginBottom: 20 }} multiline isDark={onGradient} />
-            ) : <h1 style={{ ...h1Style, marginBottom: 20 }}>{s.headline}</h1>}
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, marginBottom: 20 }} multiline isDark={onGradient} render={headline} />
+            ) : <h1 style={{ ...h1Style, marginBottom: 20 }}>{headline(s.headline)}</h1>}
             {s.promptBox && (
               <PromptBox
                 label={s.promptBox.label}
@@ -456,8 +484,8 @@ function renderSlideContent(args: {
             </TagLabel>
           </div>
           {onEdit ? (
-            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 28, marginBottom: 22 }} multiline />
-          ) : <h1 style={{ ...h1Style, fontSize: 28, marginBottom: 22 }}>{s.headline}</h1>}
+            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 28, marginBottom: 22 }} multiline render={headline} />
+          ) : <h1 style={{ ...h1Style, fontSize: 28, marginBottom: 22 }}>{headline(s.headline)}</h1>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {s.features.map((f, i) => (
               <FeatureRow
@@ -488,8 +516,8 @@ function renderSlideContent(args: {
               </TagLabel>
             </div>
             {onEdit ? (
-              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark />
-            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{s.headline}</h1>}
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 30, marginBottom: 22 }} multiline isDark render={headline} />
+            ) : <h1 style={{ ...h1Style, fontSize: 30, marginBottom: 22 }}>{headline(s.headline)}</h1>}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {s.tags.map((t, i) => (
                 <Pill key={i} isDark>
@@ -517,7 +545,7 @@ function renderSlideContent(args: {
       const s = slide
       return (
         <>
-          <div style={{ marginTop: 12, marginBottom: 12 }}>
+          <div style={{ marginTop: 4, marginBottom: 10 }}>
             <TagLabel bg={bg} brandPrimary={palette.brandPrimary} brandLight={palette.brandLight} fontFamily={bodyFont}>
               {onEdit ? (
                 <EditableText value={s.tagLabel} onChange={(v) => onEdit({ ...s, tagLabel: v })} style={{ fontSize: 'inherit', letterSpacing: 'inherit', fontWeight: 'inherit', display: 'inline-block' }} />
@@ -525,9 +553,9 @@ function renderSlideContent(args: {
             </TagLabel>
           </div>
           {onEdit ? (
-            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 28, marginBottom: 22 }} multiline />
-          ) : <h1 style={{ ...h1Style, fontSize: 28, marginBottom: 22 }}>{s.headline}</h1>}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, fontSize: 26, marginBottom: 16 }} multiline render={headline} />
+          ) : <h1 style={{ ...h1Style, fontSize: 26, marginBottom: 16 }}>{headline(s.headline)}</h1>}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {s.steps.map((st, i) => (
               <StepRow
                 key={i}
@@ -572,8 +600,8 @@ function renderSlideContent(args: {
               </div>
             )}
             {onEdit ? (
-              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, textAlign: 'center', marginBottom: 10 }} multiline isDark />
-            ) : <h1 style={{ ...h1Style, textAlign: 'center', marginBottom: 10 }}>{s.headline}</h1>}
+              <EditableText value={s.headline} onChange={(v) => onEdit({ ...s, headline: v })} style={{ ...h1Style, textAlign: 'center', marginBottom: 10 }} multiline isDark render={headline} />
+            ) : <h1 style={{ ...h1Style, textAlign: 'center', marginBottom: 10 }}>{headline(s.headline)}</h1>}
             {onEdit ? (
               <EditableText value={s.tagline} onChange={(v) => onEdit({ ...s, tagline: v })} style={{ ...hookStyle, textAlign: 'center', marginBottom: 24 }} multiline isDark />
             ) : <p style={{ ...hookStyle, textAlign: 'center', marginBottom: 24 }}>{s.tagline}</p>}

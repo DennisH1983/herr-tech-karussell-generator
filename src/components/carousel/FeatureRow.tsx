@@ -3,7 +3,7 @@
  *
  * The `icon` field stays in the schema for compatibility, but is no longer
  * rendered: colorful emojis clashed with the calm brand typography. Each row
- * gets a short accent bar in the brand color instead.
+ * gets a full-height accent rule in the brand color instead.
  */
 
 import type { CSSProperties } from 'react'
@@ -34,10 +34,11 @@ export function FeatureRow({
       <div
         aria-hidden
         style={{
+          // Full-height rule next to label + description: stays aligned even
+          // though html2canvas shifts small text slightly in exports.
           flexShrink: 0,
-          width: 4,
-          height: 18,
-          marginTop: 1,
+          alignSelf: 'stretch',
+          width: 3,
           borderRadius: 2,
           background: brandPrimary ?? labelColor,
         }}
